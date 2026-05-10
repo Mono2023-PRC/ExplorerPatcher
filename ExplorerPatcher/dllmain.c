@@ -7384,7 +7384,6 @@ HRESULT explorer_DrawThemeBackground(
                         }
                         DeleteDC(hdcMem);
                     }
-                    return S_OK;
                 }
                 return S_OK;
             }
