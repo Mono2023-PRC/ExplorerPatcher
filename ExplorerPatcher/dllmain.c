@@ -163,6 +163,7 @@ int (*SHWindowsPolicy)(REFIID);
 #define ORB_STYLE_WINDOWS10 0
 #define ORB_STYLE_WINDOWS11 1
 #define ORB_STYLE_TRANSPARENT 2
+#define ORB_STYLE_WINDOWS12 3
 typedef struct _OrbInfo
 {
     HTHEME hTheme;
@@ -7352,6 +7353,38 @@ HRESULT explorer_DrawThemeBackground(
                         pRect->bottom - pRect->top,
                         0, 0, 1, 1, &transparent, &bi,
                         DIB_RGB_COLORS, SRCCOPY);
+                }
+                else if (dwOrbStyle == ORB_STYLE_WINDOWS12)
+                {
+                    HDC hdcMem = CreateCompatibleDC(hdc);
+                    if (hdcMem)
+                    {
+                        HBITMAP hBitmap = CreateCompatibleBitmap(hdc, pRect->right - pRect->left, pRect->bottom - pRect->top);
+                        if (hBitmap)
+                        {
+                            HGDIOBJ hOldBitmap = SelectObject(hdcMem, hBitmap);
+                            
+                            DrawThemeBackground(hTheme, hdcMem, iPartId, iStateId, pRect, pClipRect);
+                            
+                            SetStretchBltMode(hdc, HALFTONE);
+                            StretchBlt(
+                                hdc,
+                                pRect->right,
+                                pRect->top,
+                                -(pRect->right - pRect->left),
+                                pRect->bottom - pRect->top,
+                                hdcMem,
+                                0, 0,
+                                pRect->right - pRect->left,
+                                pRect->bottom - pRect->top,
+                                SRCCOPY);
+                            
+                            SelectObject(hdcMem, hOldBitmap);
+                            DeleteObject(hBitmap);
+                        }
+                        DeleteDC(hdcMem);
+                    }
+                    return S_OK;
                 }
                 return S_OK;
             }

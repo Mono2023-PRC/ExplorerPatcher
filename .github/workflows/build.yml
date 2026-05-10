@@ -102,8 +102,6 @@ jobs:
           latest: true
           out-file-path: build/Release
 
-      # build/Release/ep_taskbar.*.amd64.dll -> build/Release/x64/ep_taskbar.*.dll
-      # build/Release/ep_taskbar.*.arm64.dll -> build/Release/ARM64/ep_taskbar.*.dll
       - name: Move ep_taskbar
         shell: bash
         run: |
@@ -114,38 +112,11 @@ jobs:
             done
           fi
 
-          if ls build/Release/ep_taskbar.*.arm64.dll 1> /dev/null 2>&1; then
-            mkdir -p build/Release/ARM64
-            for file in build/Release/ep_taskbar.*.arm64.dll; do
-              mv "$file" "build/Release/ARM64/$(basename "$file" .arm64.dll).dll"
-            done
-          fi
-
-      - name: Build ExplorerPatcher (IA-32)
-        if: github.event.inputs.config == ''
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: |
-          msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=IA-32 ${{env.SOLUTION_FILE_PATH}}
-
       - name: Build ExplorerPatcher (amd64)
         if: github.event.inputs.config == ''
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: |
           msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=amd64 ${{env.SOLUTION_FILE_PATH}}
-
-      - name: Build ExplorerPatcher (arm64)
-        if: github.event.inputs.config == ''
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: |
-          msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=arm64 /p:WithArm64XBinaries=true ${{env.SOLUTION_FILE_PATH}}
-
-      - name: Build ExplorerPatcher (Custom Build)
-        if: github.event.inputs.config != ''
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: |
-          msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=$env:GITHUB_EVENT_INPUTS_CONFIG ${{env.SOLUTION_FILE_PATH}}
-        env:
-          GITHUB_EVENT_INPUTS_CONFIG: ${{ github.event.inputs.config }}
 
       - name: Create expected build directory
         if: github.event.inputs.build_dir != ''
@@ -160,7 +131,6 @@ jobs:
         shell: bash
         run: |
           if [[ -f "build/Release/x64/ExplorerPatcher.amd64.dll" ]]; then cp build/Release/x64/ExplorerPatcher.amd64.dll build/Release/x64/dxgi.dll; fi
-          if [[ -f "build/Release/ARM64/ExplorerPatcher.arm64.dll" ]]; then cp build/Release/ARM64/ExplorerPatcher.arm64.dll build/Release/ARM64/dxgi.dll; fi
 
       - name: Patch amd64 setup
         shell: cmd
@@ -170,21 +140,11 @@ jobs:
           )
           exit /b 0
 
-      - name: Patch arm64 setup
-        shell: cmd
-        run: |
-          if exist "build\Release\ARM64\ExplorerPatcher.arm64.dll" (
-            "build\Release\x64\ep_setup_patch.exe" "build\Release\ARM64\ExplorerPatcher.arm64.dll" "build\Release\ARM64\ep_setup.exe"
-          )
-          exit /b 0
-
       - name: Delete intermediate files
         shell: bash
         run: |
           rm -rf build/Release/x64/ep_setup_files
           rm -f build/Release/x64/ep_setup_files.zip.bin
-          rm -rf build/Release/ARM64/ep_setup_files
-          rm -f build/Release/ARM64/ep_setup_files.zip.bin
 
       - name: Upload artifacts
         if: github.event_name != 'pull_request'
@@ -195,17 +155,12 @@ jobs:
             build/Release/
           if-no-files-found: error
 
-      # build/Release/x64/ep_setup.exe -> build/Release/ep_setup.exe
-      # build/Release/ARM64/ep_setup.exe -> build/Release/ep_setup_arm64.exe
       - name: Stage files for release
         if: github.event_name == 'push' && github.ref_type == 'tag'
         shell: bash
         run: |
           if [ -d "build/Release/x64" ] && ls build/Release/x64/ep_setup.exe 1> /dev/null 2>&1; then
             cp build/Release/x64/ep_setup.exe build/Release/ep_setup.exe
-          fi
-          if [ -d "build/Release/ARM64" ] && ls build/Release/ARM64/ep_setup.exe 1> /dev/null 2>&1; then
-            cp build/Release/ARM64/ep_setup.exe build/Release/ep_setup_arm64.exe
           fi
 
       - name: Generate release name
@@ -241,7 +196,6 @@ jobs:
           body: ${{ steps.release_description.outputs.data }}
           files: |
             build/Release/ep_setup.exe
-            build/Release/ep_setup_arm64.exe
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
@@ -257,8 +211,5 @@ jobs:
           body: ${{ steps.release_description.outputs.data }}
           files: |
             build/Release/ep_setup.exe
-            build/Release/ep_setup_arm64.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-

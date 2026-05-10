@@ -68,6 +68,7 @@ BEGIN
     IDS_TB_STARTBTNSTYLE        "Start button style"
     IDS_TB_STARTBTNSTYLE_0      "Windows 10 (default)"
     IDS_TB_STARTBTNSTYLE_1      "Windows 11"
+    IDS_TB_STARTBTNSTYLE_2       "Windows 12"
     IDS_TB_PRIMARYTBALIGN       "Primary taskbar alignment"
     IDS_TB_TBALIGN_0            "At screen edge (default)"
     IDS_TB_TBALIGN_1            "Centered"
